@@ -1,23 +1,15 @@
--- Start of DDL Script for Package Body DEPSTAT.EMAILREADER
--- Generated 23/10/2012 16:42:41 from DEPSTAT@BISDB
-
--- Drop the old instance of EMAILREADER
-DROP PACKAGE emailreader
-/
-
-CREATE OR REPLACE 
-PACKAGE emailreader
+CREATE OR REPLACE PACKAGE emailreader
 authid current_user
   IS
--- Чтение писем из почты
+-- Р§С‚РµРЅРёРµ РїРёСЃРµРј РёР· РїРѕС‡С‚С‹
 --
 -- Author = sparshukov   
 -- ---------  ----------  ------------------------------------------
---            10/11/2011  первоначальные наброски
+--            10/11/2011  РїРµСЂРІРѕРЅР°С‡Р°Р»СЊРЅС‹Рµ РЅР°Р±СЂРѕСЃРєРё
 --            17/01/2012  CmdCnt, LoginImap, LogoutImap
 -- ---------  ----------  ------------------------------------------
-   g_sender         varchar2(50)     := '<autoreport@megafonkavkaz.ru>';
-   g_mailhost       VARCHAR2(50)     := 'mailr1.lan.megafonkavkaz.ru';
+   g_sender         varchar2(50)     := '<autoreport@domain.ru>';
+   g_mailhost       VARCHAR2(50)     := 'mail_host_or_IP';
    g_mail_conn      utl_smtp.connection;
    g_message        varchar2(4000)   := NULL;
    g_mailBoundary  varchar2(50) := 'mailpartPsv3';
@@ -65,27 +57,28 @@ authid current_user
   p_subexpr   number    default 0
 )return number;
 END;
+
+
 /*
-выполнение расчета 
-	- по джобу номер 5
-	- по имени процесса
-	- по примеру (пересылка прошлого письма)
+РІС‹РїРѕР»РЅРµРЅРёРµ СЂР°СЃС‡РµС‚Р° 
+	- РїРѕ РґР¶РѕР±Сѓ РЅРѕРјРµСЂ 5
+	- РїРѕ РёРјРµРЅРё РїСЂРѕС†РµСЃСЃР°
+	- РїРѕ РїСЂРёРјРµСЂСѓ (РїРµСЂРµСЃС‹Р»РєР° РїСЂРѕС€Р»РѕРіРѕ РїРёСЃСЊРјР°)
 
-загрузка данных из вложения
+Р·Р°РіСЂСѓР·РєР° РґР°РЅРЅС‹С… РёР· РІР»РѕР¶РµРЅРёСЏ
 
-Ответ о статусе процесса
-	- когда последний раз был выполнен
-	- кому был предоставлен
+РћС‚РІРµС‚ Рѕ СЃС‚Р°С‚СѓСЃРµ РїСЂРѕС†РµСЃСЃР°
+	- РєРѕРіРґР° РїРѕСЃР»РµРґРЅРёР№ СЂР°Р· Р±С‹Р» РІС‹РїРѕР»РЅРµРЅ
+	- РєРѕРјСѓ Р±С‹Р» РїСЂРµРґРѕСЃС‚Р°РІР»РµРЅ
 
 
-1) загрузка сведений по трафику визитеров от москвы, выполнение процесса анализа, отправка результатов работы
-2) загрузка сведений по абонентам получившим призы для учета в персонифицированном учете
+1) Р·Р°РіСЂСѓР·РєР° СЃРІРµРґРµРЅРёР№ РїРѕ С‚СЂР°С„РёРєСѓ РІРёР·РёС‚РµСЂРѕРІ РѕС‚ РјРѕСЃРєРІС‹, РІС‹РїРѕР»РЅРµРЅРёРµ РїСЂРѕС†РµСЃСЃР° Р°РЅР°Р»РёР·Р°, РѕС‚РїСЂР°РІРєР° СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ СЂР°Р±РѕС‚С‹
+2) Р·Р°РіСЂСѓР·РєР° СЃРІРµРґРµРЅРёР№ РїРѕ Р°Р±РѕРЅРµРЅС‚Р°Рј РїРѕР»СѓС‡РёРІС€РёРј РїСЂРёР·С‹ РґР»СЏ СѓС‡РµС‚Р° РІ РїРµСЂСЃРѕРЅРёС„РёС†РёСЂРѕРІР°РЅРЅРѕРј СѓС‡РµС‚Рµ
 3)*/
 /
 
 
-CREATE OR REPLACE 
-PACKAGE BODY emailreader
+CREATE OR REPLACE PACKAGE BODY emailreader
 IS
 
   l_debug       number := 1;
@@ -103,7 +96,7 @@ IS
   PRAGMA EXCEPTION_INIT (tcp_connect_closed, -29260);
   
 --------------------------------------------------------------------------------
--- вспомогательные процедурки
+-- РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Рµ РїСЂРѕС†РµРґСѓСЂРєРё
 --------------------------------------------------------------------------------
 procedure debugmsg(msg in varchar2, p_debug_supress number default 0)
 is
@@ -125,7 +118,7 @@ is
   l_from number;
 begin
   l_from := nvl(p_from, g_reply.first);
-  dbms_output.put_line('---start of stack--('||case when p_from is null then 'с начала'else to_char(l_from)end||')---------');
+  dbms_output.put_line('---start of stack--('||case when p_from is null then 'СЃ РЅР°С‡Р°Р»Р°'else to_char(l_from)end||')---------');
   for i in l_from .. g_reply.last
   loop
     dbms_output.put_line(i||': '||g_reply(i));
@@ -201,7 +194,7 @@ begin
 --  dbms_output.put_line('==start='||l_startToken||'==stop='||l_stopToken||'========================================== ');
   for i in g_lastStackMsg .. g_reply.last
   loop
---    dbms_output.put_line('== итерация '||i||'========================================== ');
+--    dbms_output.put_line('== РёС‚РµСЂР°С†РёСЏ '||i||'========================================== ');
     l_linecarryout := 0;
     if l_start_pos=0 then 
       l_start_pos := instr( upper(g_reply(i)), l_startToken);
@@ -306,9 +299,9 @@ is
 begin
   for i in g_lastStackMsg .. g_reply.last
   loop
---    dbms_output.put_line('---------------- строка '||i||' -----------------');
+--    dbms_output.put_line('---------------- СЃС‚СЂРѕРєР° '||i||' -----------------');
     if upper(g_reply(i)) like upper(p_string) then 
---      dbms_output.put_line('---------------- найдена строка под паттерн -----------------');
+--      dbms_output.put_line('---------------- РЅР°Р№РґРµРЅР° СЃС‚СЂРѕРєР° РїРѕРґ РїР°С‚С‚РµСЂРЅ -----------------');
       l_value := regexp_substr(g_reply(i), p_pattern, p_position, p_occur, p_mathparam, p_subexpr);
         return trim(l_value);
     end if;
@@ -330,31 +323,31 @@ begin
 end;
 
 --------------------------------------------------------------------------------
--- зачитывает ответ, если он есть
+-- Р·Р°С‡РёС‚С‹РІР°РµС‚ РѕС‚РІРµС‚, РµСЃР»Рё РѕРЅ РµСЃС‚СЊ
 PROCEDURE get_reply (p_conn  IN OUT NOCOPY  UTL_TCP.connection, p_debug_supress in number default 0, p_use_gclob number default 0) 
 IS
   l_reply_cmd  VARCHAR2(200) := NULL;
   l_line       VARCHAR2(1000):= NULL;
   l_err        varchar2(3000):= '';
-  l_cnt        number        := 0; --счетчик считанных строк
+  l_cnt        number        := 0; --СЃС‡РµС‚С‡РёРє СЃС‡РёС‚Р°РЅРЅС‹С… СЃС‚СЂРѕРє
   l_tail       number;
 BEGIN
-  g_reply_status := null; -- сбрасываем статус
-  l_tail := g_reply.Last; -- идентифицируем последнюю запись в стеке
-  -- усекаем спец.цлоб с ответом, при необходимости
+  g_reply_status := null; -- СЃР±СЂР°СЃС‹РІР°РµРј СЃС‚Р°С‚СѓСЃ
+  l_tail := g_reply.Last; -- РёРґРµРЅС‚РёС„РёС†РёСЂСѓРµРј РїРѕСЃР»РµРґРЅСЋСЋ Р·Р°РїРёСЃСЊ РІ СЃС‚РµРєРµ
+  -- СѓСЃРµРєР°РµРј СЃРїРµС†.С†Р»РѕР± СЃ РѕС‚РІРµС‚РѕРј, РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё
   if p_use_gclob=1 then   
     dbms_lob.trim(g_clob,0);
   end if;
-  -- зачитываем строки из открытого порта
+  -- Р·Р°С‡РёС‚С‹РІР°РµРј СЃС‚СЂРѕРєРё РёР· РѕС‚РєСЂС‹С‚РѕРіРѕ РїРѕСЂС‚Р°
   LOOP
     l_line := UTL_TCP.get_line(p_conn, TRUE);
     l_cnt  := l_cnt + 1;
     if p_use_gclob=1 then 
-      -- если ответ машрутизируется в спец.цлоб
+      -- РµСЃР»Рё РѕС‚РІРµС‚ РјР°С€СЂСѓС‚РёР·РёСЂСѓРµС‚СЃСЏ РІ СЃРїРµС†.С†Р»РѕР±
       if l_cnt=1 then g_reply.extend; g_reply(g_reply.last) := l_line; end if;
       dbms_lob.writeAppend(g_clob, length(l_line), l_line);
     else
-      -- если ответ идет стандартный лог
+      -- РµСЃР»Рё РѕС‚РІРµС‚ РёРґРµС‚ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ Р»РѕРі
       g_reply.extend; g_reply(g_reply.last) := l_line;
       debugmsg('g_reply ('||l_line||')', p_debug_supress);
     end if;
@@ -362,11 +355,11 @@ BEGIN
 EXCEPTION
   WHEN UTL_TCP.END_OF_INPUT     THEN null;
   when utl_tcp.TRANSFER_TIMEOUT then 
-    -- корректируем хвостик на последний ответ
+    -- РєРѕСЂСЂРµРєС‚РёСЂСѓРµРј С…РІРѕСЃС‚РёРє РЅР° РїРѕСЃР»РµРґРЅРёР№ РѕС‚РІРµС‚
     if l_tail<> g_reply.last then g_lastStackMsg:=l_tail+1; end if;     
-    -- записываем в обычный лог последнюю строку ответа направленного в спец.цлоб
+    -- Р·Р°РїРёСЃС‹РІР°РµРј РІ РѕР±С‹С‡РЅС‹Р№ Р»РѕРі РїРѕСЃР»РµРґРЅСЋСЋ СЃС‚СЂРѕРєСѓ РѕС‚РІРµС‚Р° РЅР°РїСЂР°РІР»РµРЅРЅРѕРіРѕ РІ СЃРїРµС†.С†Р»РѕР±
     if p_use_gclob=1 and l_tail<> g_reply.last then g_reply.extend; g_reply(g_reply.last) := l_line; end if;
-    -- в последней строке ищем описание статуса ответа
+    -- РІ РїРѕСЃР»РµРґРЅРµР№ СЃС‚СЂРѕРєРµ РёС‰РµРј РѕРїРёСЃР°РЅРёРµ СЃС‚Р°С‚СѓСЃР° РѕС‚РІРµС‚Р°
     g_reply_status := regexp_substr(l_line,' (OK|NO|BAD|PREAUTH|ERROR|BYE)',1,1,'',1);
   when others then 
     l_err := dbms_utility.format_error_stack()||chr(13)||chr(10)||dbms_utility.format_error_backtrace();
@@ -382,7 +375,7 @@ IS
   l_result  PLS_INTEGER;
   l_err     varchar2(3000):= '';
 BEGIN
-  get_reply (p_conn); -- по протоколу сервер может передать данные клиенту без запроса с его стороны
+  get_reply (p_conn); -- РїРѕ РїСЂРѕС‚РѕРєРѕР»Сѓ СЃРµСЂРІРµСЂ РјРѕР¶РµС‚ РїРµСЂРµРґР°С‚СЊ РґР°РЅРЅС‹Рµ РєР»РёРµРЅС‚Сѓ Р±РµР· Р·Р°РїСЂРѕСЃР° СЃ РµРіРѕ СЃС‚РѕСЂРѕРЅС‹
 --  debugmsg('try command('||p_command||')');
   l_result := UTL_TCP.write_line(p_conn, p_command);
   get_reply(p_conn, p_debug_supress, p_use_gclob);
@@ -390,16 +383,16 @@ exception
   when tcp_connect_closed then /*: network error: TNS:connection closed*/
     l_err := dbms_utility.format_error_stack()||chr(13)||chr(10)||dbms_utility.format_error_backtrace();
     debugmsg(l_err);
-    debugmsg('Регенерирую Exception для выхода наружу');
+    debugmsg('Р РµРіРµРЅРµСЂРёСЂСѓСЋ Exception РґР»СЏ РІС‹С…РѕРґР° РЅР°СЂСѓР¶Сѓ');
     raise;
   when others then
     l_err := dbms_utility.format_error_stack()||chr(13)||chr(10)||dbms_utility.format_error_backtrace();
-    debugmsg(/*'ошибка при отправке команды ('||p_command||') '||*/l_err);
+    debugmsg(/*'РѕС€РёР±РєР° РїСЂРё РѕС‚РїСЂР°РІРєРµ РєРѕРјР°РЅРґС‹ ('||p_command||') '||*/l_err);
 END;
 
 
 --==============================================================================
--- логика
+-- Р»РѕРіРёРєР°
 --------------------------------------------------------------------------------
 FUNCTION loginImap (p_host  IN  VARCHAR2,
                 p_user  IN  VARCHAR2,
@@ -419,11 +412,11 @@ BEGIN
 --  l_conn.tx_timeout := 5;
   send_command(l_conn, CmdCnt||' LOGIN ' || l_user ||' '||l_pass);
   if g_reply_status<>'OK' then 
-    debugmsg('первый логин - неуспешный');
+    debugmsg('РїРµСЂРІС‹Р№ Р»РѕРіРёРЅ - РЅРµСѓСЃРїРµС€РЅС‹Р№');
     send_command(l_conn, CmdCnt||' LOGIN ' || l_user ||' '||l_pass);
   end if;
   if g_reply_status='OK' then 
-    debugmsg('соединение установлено');
+    debugmsg('СЃРѕРµРґРёРЅРµРЅРёРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅРѕ');
     g_hasUnseen := 0;
     return l_conn;
   else
@@ -449,9 +442,9 @@ END;
 
 
 --------------------------------------------------------------------------------
--- открывает указанную папку для чтения.
--- проверяет UIDVALIDITY текущий и от последнего сеанса
--- возвращает флаг - есть ли непрочтенные сообщения
+-- РѕС‚РєСЂС‹РІР°РµС‚ СѓРєР°Р·Р°РЅРЅСѓСЋ РїР°РїРєСѓ РґР»СЏ С‡С‚РµРЅРёСЏ.
+-- РїСЂРѕРІРµСЂСЏРµС‚ UIDVALIDITY С‚РµРєСѓС‰РёР№ Рё РѕС‚ РїРѕСЃР»РµРґРЅРµРіРѕ СЃРµР°РЅСЃР°
+-- РІРѕР·РІСЂР°С‰Р°РµС‚ С„Р»Р°Рі - РµСЃС‚СЊ Р»Рё РЅРµРїСЂРѕС‡С‚РµРЅРЅС‹Рµ СЃРѕРѕР±С‰РµРЅРёСЏ
 function SelectPathImap(p_conn   IN OUT NOCOPY  UTL_TCP.connection,p_box number, p_path in number) return number
 AS
   l_err         varchar2(2000);
@@ -465,17 +458,17 @@ BEGIN
   debugmsg('--------- SelectPathImap("'||l_path||'")');
   send_command(p_conn, CmdCnt||' SELECT "'||l_path||'"');
   if g_reply_status = 'OK' then 
-    debugmsg('путь '||p_path||' существует. анализируем стек ответа команды №'||g_CmtCounter);
+    debugmsg('РїСѓС‚СЊ '||p_path||' СЃСѓС‰РµСЃС‚РІСѓРµС‚. Р°РЅР°Р»РёР·РёСЂСѓРµРј СЃС‚РµРє РѕС‚РІРµС‚Р° РєРѕРјР°РЅРґС‹ в„–'||g_CmtCounter);
     
     select uidvalidity into l_uidbox from er_paths where box_box_id = p_box and path_id = p_path;
     l_uidv := FindInAnswer('%UIDVALIDITY%','\[UIDVALIDITY ([0-9]+).*',1,1,'i',1); --FindInAnswer('%UIDVALIDITY%','[0-9]+');
     if l_uidbox is null then 
-      debugmsg('фиксируем первое UIDVALIDITY '||l_uidv||' ящика '||p_box||' путь '||p_path);
+      debugmsg('С„РёРєСЃРёСЂСѓРµРј РїРµСЂРІРѕРµ UIDVALIDITY '||l_uidv||' СЏС‰РёРєР° '||p_box||' РїСѓС‚СЊ '||p_path);
       update er_paths set uidvalidity = l_uidv where box_box_id = p_box and path_id = p_path;
       commit;
     else
       if l_uidv <> l_uidbox then 
-        debugmsg('ВНИМАНИЕ: изменился UIDVALIDITY c '||l_uidbox||' на '||l_uidv);
+        debugmsg('Р’РќРРњРђРќРР•: РёР·РјРµРЅРёР»СЃСЏ UIDVALIDITY c '||l_uidbox||' РЅР° '||l_uidv);
       end if;
     end if;
 
@@ -483,10 +476,10 @@ BEGIN
     l_hasUnseen := g_hasUnseen + nvl(l_hasUnseen,0);
 --    dbms_output.put_line('UNSEEN='||l_hasUnseen);
     if nvl(l_hasUnseen,0)=0 then 
-      update er_boxes set LAST_CHECK_MSG = 'нет новых сообщений' where box_id = p_box;
+      update er_boxes set LAST_CHECK_MSG = 'РЅРµС‚ РЅРѕРІС‹С… СЃРѕРѕР±С‰РµРЅРёР№' where box_id = p_box;
     else 
-      update er_boxes set LAST_CHECK_MSG = 'есть непрочтенные сообщения' where box_id = p_box;
-      debugmsg('есть непрочтенные сообщения в ящике '||p_box||' путь '||p_path);
+      update er_boxes set LAST_CHECK_MSG = 'РµСЃС‚СЊ РЅРµРїСЂРѕС‡С‚РµРЅРЅС‹Рµ СЃРѕРѕР±С‰РµРЅРёСЏ' where box_id = p_box;
+      debugmsg('РµСЃС‚СЊ РЅРµРїСЂРѕС‡С‚РµРЅРЅС‹Рµ СЃРѕРѕР±С‰РµРЅРёСЏ РІ СЏС‰РёРєРµ '||p_box||' РїСѓС‚СЊ '||p_path);
     end if;
     commit;
     return l_hasUnseen;
@@ -503,8 +496,8 @@ END;
 
 
 --==============================================================================
--- по правилам из ER_RULES ищет UID сообщения для загрузки
--- по построенному списку загружает заголовки писем
+-- РїРѕ РїСЂР°РІРёР»Р°Рј РёР· ER_RULES РёС‰РµС‚ UID СЃРѕРѕР±С‰РµРЅРёСЏ РґР»СЏ Р·Р°РіСЂСѓР·РєРё
+-- РїРѕ РїРѕСЃС‚СЂРѕРµРЅРЅРѕРјСѓ СЃРїРёСЃРєСѓ Р·Р°РіСЂСѓР¶Р°РµС‚ Р·Р°РіРѕР»РѕРІРєРё РїРёСЃРµРј
 procedure loadAttachHeaders(p_conn   IN OUT NOCOPY  UTL_TCP.connection, p_mail in number)
 is
   l_err             varchar2(2000)  :=  '';
@@ -520,7 +513,7 @@ is
   l_msg_uid         number;
   l_status          number;
 begin
-    ----- загружаем залоговки вложений
+    ----- Р·Р°РіСЂСѓР¶Р°РµРј Р·Р°Р»РѕРіРѕРІРєРё РІР»РѕР¶РµРЅРёР№
     l_header := null;
     l_attach_count := null;
     select MSG_UID, substr(SUBJECT,1,200), case when lower(CONTYPE) like 'multipart%' then 1 else 0 end 
@@ -561,7 +554,7 @@ end;
 
 
 --==============================================================================
--- по правилам из ER_RULES ищет UID сообщения для загрузки
+-- РїРѕ РїСЂР°РІРёР»Р°Рј РёР· ER_RULES РёС‰РµС‚ UID СЃРѕРѕР±С‰РµРЅРёСЏ РґР»СЏ Р·Р°РіСЂСѓР·РєРё
 function search4Load(p_conn   IN OUT NOCOPY  UTL_TCP.connection, p_box in number, p_path in number) return number
 is
   l_err             varchar2(2000)  :=  '';
@@ -572,7 +565,7 @@ begin
   debugmsg('--------- search4Load');
   emailList.delete; 
   emailList.extend;
-  -- поиск писем по правилам из ER_RULES
+  -- РїРѕРёСЃРє РїРёСЃРµРј РїРѕ РїСЂР°РІРёР»Р°Рј РёР· ER_RULES
   for i in (select RULE_TEXT, box_box_id, path_path_id from er_rules 
             where 1=1
               and ( (box_box_id = p_box and path_path_id = p_path ) or
@@ -583,7 +576,7 @@ begin
               and sysdate between start_date and end_date
             /*union select 'UNSEEN', p_box, p_path from dual*/)
   loop
-      debugmsg('- поиск по команде '||i.RULE_TEXT||' в ящике\пути='||nvl(to_char(i.box_box_id),'<null>')||nvl(to_char(i.path_path_id),'<null>'));
+      debugmsg('- РїРѕРёСЃРє РїРѕ РєРѕРјР°РЅРґРµ '||i.RULE_TEXT||' РІ СЏС‰РёРєРµ\РїСѓС‚Рё='||nvl(to_char(i.box_box_id),'<null>')||nvl(to_char(i.path_path_id),'<null>'));
       send_command(p_conn, CmdCnt||' UID SEARCH '||i.RULE_TEXT);
       if g_reply_status = 'OK' then 
         for i in g_lastStackMsg .. g_reply.last
@@ -604,13 +597,13 @@ begin
                   emailList.extend;
                   emailList(emailList.last) := j_str;
                 end if;
-             end loop; -- закончили пополнять коллекцию
-          end if; -- закончили разбирать ответ сервера на команду SEАRCH
-        end loop; -- по всем строкам ответа от сервера
-      end if; -- завершили обработку "ОК" от всех команды SERCH
+             end loop; -- Р·Р°РєРѕРЅС‡РёР»Рё РїРѕРїРѕР»РЅСЏС‚СЊ РєРѕР»Р»РµРєС†РёСЋ
+          end if; -- Р·Р°РєРѕРЅС‡РёР»Рё СЂР°Р·Р±РёСЂР°С‚СЊ РѕС‚РІРµС‚ СЃРµСЂРІРµСЂР° РЅР° РєРѕРјР°РЅРґСѓ SEРђRCH
+        end loop; -- РїРѕ РІСЃРµРј СЃС‚СЂРѕРєР°Рј РѕС‚РІРµС‚Р° РѕС‚ СЃРµСЂРІРµСЂР°
+      end if; -- Р·Р°РІРµСЂС€РёР»Рё РѕР±СЂР°Р±РѕС‚РєСѓ "РћРљ" РѕС‚ РІСЃРµС… РєРѕРјР°РЅРґС‹ SERCH
   end loop;
   emailList.delete(1);
-  debugmsg('Найдено '||emailList.Count||' писем для загрузки');
+  debugmsg('РќР°Р№РґРµРЅРѕ '||emailList.Count||' РїРёСЃРµРј РґР»СЏ Р·Р°РіСЂСѓР·РєРё');
 
   return emailList.count;
   
@@ -621,7 +614,7 @@ exception
 end;
 
 --==============================================================================
--- по построенному списку emailList загружает заголовки писем
+-- РїРѕ РїРѕСЃС‚СЂРѕРµРЅРЅРѕРјСѓ СЃРїРёСЃРєСѓ emailList Р·Р°РіСЂСѓР¶Р°РµС‚ Р·Р°РіРѕР»РѕРІРєРё РїРёСЃРµРј
 procedure loadHeaders(p_conn   IN OUT NOCOPY  UTL_TCP.connection, p_box in number, p_path in number)
 is
   l_err             varchar2(2000)  :=  '';
@@ -641,9 +634,9 @@ is
   l_header          clob;
 begin
   debugmsg('--------- loadHeaders');
-  -- непосредственно загрузка заголовков писем с установкой флага прочтения
+  -- РЅРµРїРѕСЃСЂРµРґСЃС‚РІРµРЅРЅРѕ Р·Р°РіСЂСѓР·РєР° Р·Р°РіРѕР»РѕРІРєРѕРІ РїРёСЃРµРј СЃ СѓСЃС‚Р°РЅРѕРІРєРѕР№ С„Р»Р°РіР° РїСЂРѕС‡С‚РµРЅРёСЏ
   if search4Load(p_conn, p_box, p_path) >0 then 
-    --debugmsg('Найдено '||emailList.Count||' писем для загрузки');
+    --debugmsg('РќР°Р№РґРµРЅРѕ '||emailList.Count||' РїРёСЃРµРј РґР»СЏ Р·Р°РіСЂСѓР·РєРё');
     for i in emailList.first .. emailList.last
     loop
       select count(1) into l_res from er_mail where box_box_id = p_box and path_path_id = p_path and msg_uid = emailList(i);
@@ -654,7 +647,7 @@ begin
         
         if g_reply_status = 'OK' then 
           begin
-            ----- загружаем залоговки писем
+            ----- Р·Р°РіСЂСѓР¶Р°РµРј Р·Р°Р»РѕРіРѕРІРєРё РїРёСЃРµРј
             l_size        := FindInAnswerN('%RFC822.SIZE%','RFC822.SIZE ([0-9]+)',1,1,'i',1);      
             l_date_tz     := FindInAnswerD('DATE:%','\d.*', 'dd Mon YYYY hh24:mi:ss +TZHTZM','NLS_LANGUAGE=AMERICAN'); --trim(FindInAnswer('DATE:%','\d.*'));
             l_FROM        := decode_rfc2047(FindInAnswerToken('FROM:'));
@@ -676,7 +669,7 @@ begin
                      l_from, l_subject, l_CONTYPE,l_MESSAGE_ID, l_inreplyto, l_boundary,
                      l_retpath, l_header, g_clob)
             returning mail_id into l_mail_id;
-            commit; -- после того как зачитаем письмо полностью.
+            commit; -- РїРѕСЃР»Рµ С‚РѕРіРѕ РєР°Рє Р·Р°С‡РёС‚Р°РµРј РїРёСЃСЊРјРѕ РїРѕР»РЅРѕСЃС‚СЊСЋ.
           
             loadAttachHeaders(p_conn, l_mail_id);
          
@@ -686,18 +679,18 @@ begin
               debugmsg(l_err);
               insert into er_mail(msg_uid,box_box_id,path_path_id, rfc_header)
                      values(emailList(i), p_box,     p_path,       l_header);
-              commit; -- после того как зачитаем письмо полностью.
+              commit; -- РїРѕСЃР»Рµ С‚РѕРіРѕ РєР°Рє Р·Р°С‡РёС‚Р°РµРј РїРёСЃСЊРјРѕ РїРѕР»РЅРѕСЃС‚СЊСЋ.
           end;
-          -- ставим статус "Прочитано"
+          -- СЃС‚Р°РІРёРј СЃС‚Р°С‚СѓСЃ "РџСЂРѕС‡РёС‚Р°РЅРѕ"
           --send_command(p_conn, CmdCnt||' UID STORE '||emailList(i)||' +FLAGS.SILENT \Seen', p_debug_supress=>1);
         else
-          debugmsg('Статус UID сообщения '||emailList(i)||' равен '||g_reply_status||'. Пропускаем');
+          debugmsg('РЎС‚Р°С‚СѓСЃ UID СЃРѕРѕР±С‰РµРЅРёСЏ '||emailList(i)||' СЂР°РІРµРЅ '||g_reply_status||'. РџСЂРѕРїСѓСЃРєР°РµРј');
           insert into er_mail(msg_uid,box_box_id,path_path_id, rfc_header, status)
                  values(emailList(i), p_box,     p_path,       l_header,-1);
           commit;
         end if;
       else
-        debugmsg('а есть уже письмо с UID='||emailList(i));
+        debugmsg('Р° РµСЃС‚СЊ СѓР¶Рµ РїРёСЃСЊРјРѕ СЃ UID='||emailList(i));
       end if;
     end loop;
   end if;
@@ -718,13 +711,13 @@ is
   l_username varchar2(100);
   l_pass     varchar2(100);  
 begin
-  debugmsg('Проверяю ящик №'||p_box/*||' '||i.username||' на '||i.hostname*/);
+  debugmsg('РџСЂРѕРІРµСЂСЏСЋ СЏС‰РёРє в„–'||p_box/*||' '||i.username||' РЅР° '||i.hostname*/);
   select protocol, hostname, username, pass into l_protocol, l_hostname, l_username, l_pass
   from er_boxes where box_id = box_id;
   if l_protocol='imap' then 
     l_conn := emailreader.loginImap(l_hostname, l_username, l_pass);
     if l_conn.remote_port is null then 
-      dbms_output.put_line('сервера не существует'); 
+      dbms_output.put_line('СЃРµСЂРІРµСЂР° РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚'); 
       return res_error;
     end if;
     update er_boxes set LAST_CHECK = sysdate where box_id = p_box;
@@ -751,7 +744,3 @@ begin
   dbms_lob.createtemporary(g_clob, false);
 end;
 /
-
-
--- End of DDL Script for Package Body DEPSTAT.EMAILREADER
-
